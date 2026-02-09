@@ -7,6 +7,7 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-Route::get('/student', function(){
-    return "student";
-});
+
+// عملية الربط
+
+require app_path('Modules/Identity/Routes/api.php');

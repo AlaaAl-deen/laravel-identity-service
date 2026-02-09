@@ -11,3 +11,5 @@ Route::get('/user', function (Request $request) {
 // عملية الربط
 
 require app_path('Modules/Identity/Routes/api.php');
+
+require base_path('app/Modules/UserManagement/routes/api.php');

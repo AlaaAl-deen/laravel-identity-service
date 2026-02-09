@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Email</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="card">
+    <h2>Add Email</h2>
+    <p>Enter your email to receive a verification link.</p>
+
+    <input id="email" placeholder="Email address">
+    <button onclick="addEmail()">Send Verification</button>
+
+    <div id="msg"></div>
+</div>
+
+<script src="js/app.js"></script>
+<script>
+function showMessage(type, text) {
+    const msg = document.getElementById("msg");
+    msg.innerHTML = `<div class="alert alert-${type}">${text}</div>`;
+}
+
+function addEmail() {
+    const emailField = document.getElementById("email");
+    const msg = document.getElementById("msg");
+
+    msg.innerHTML = "";
+
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+        msg.innerText = "Session expired. Please login again.";
+        return;
+    }
+
+    fetch(API + "/add-email", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token
+        },
+        body: JSON.stringify({ email: emailField.value })
+    })
+    .then(r => r.json())
+    .then(data => {
+        msg.style.color = "green";
+        msg.innerText = data.message || "Verification sent";
+    })
+    .catch(() => {
+        msg.innerText = "Cannot connect to server";
+    });
+}
+
+</script>
+</body>
+</html>

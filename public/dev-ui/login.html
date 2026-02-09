@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Login</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="card">
+    <h2>Welcome Back</h2>
+
+    <input id="universityId" placeholder="University ID">
+    <input id="password" type="password" placeholder="Password">
+
+    <button onclick="login()">Login</button>
+
+    <a class="link" href="forgot-password.html">Forgot Password?</a>
+
+    <div class="message" id="msg"></div>
+</div>
+
+<script src="js/app.js"></script>
+<script>
+const msg = document.getElementById("msg");
+const params = new URLSearchParams(window.location.search);
+
+if (params.get("verified") === "1") {
+    msg.style.color = "green";
+    msg.innerText = "Email verified successfully. Please log in.";
+}
+
+function login() {
+    const universityField = document.getElementById("universityId");
+    const passwordField = document.getElementById("password");
+    const msg = document.getElementById("msg");
+
+    msg.innerText = "";
+
+    fetch(API + "/login", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            universityId: universityField.value,
+            password: passwordField.value
+        })
+    })
+    .then(async (response) => {
+        const data = await response.json();
+
+        if (!response.ok) {
+            if (data.errors) {
+                const firstError = Object.values(data.errors)[0][0];
+                msg.innerText = firstError;
+            } else {
+                msg.innerText = data.message || "Login failed";
+            }
+            return;
+        }
+
+        if (data.status === "mustChangePassword") {
+            saveToken(data.setupToken);
+            window.location = "change-password.html";
+        }
+        else if (data.status === "mustAddEmail") {
+            saveToken(data.setupToken);
+            window.location = "add-email.html";
+        }
+        else if (data.status === "emailNotVerified") {
+            saveToken(data.setupToken);
+            window.location = "verify-email.html";
+        }
+        else if (data.status === "ok") {
+            saveToken(data.token);
+            localStorage.setItem("user", JSON.stringify(data.user));
+            window.location = "dashboard.html";
+        }
+    })
+    .catch(() => {
+        msg.innerText = "Cannot connect to server";
+    });
+}
+
+</script>
+</body>
+</html>

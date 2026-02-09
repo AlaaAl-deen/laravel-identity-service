@@ -8,56 +8,75 @@ use Illuminate\Support\Facades\Password;
 
 class AuthService
 {
-    public function login(array $data): array
-    {
-        $user = User::where('university_id', $data['universityId'])->first();
+   public function login(array $data): array
+{
+    $user = User::where('university_id', $data['universityId'])->first();
 
-        if (!$user || !Hash::check($data['password'], $user->password)) {
-            return [
-                'message' => 'Invalid credentials',
-            ];
-        }
-
-        if ($user->must_change_password) {
-            $token = $user->createToken('setup-token')->plainTextToken;
-
-            return [
-                'status' => 'mustChangePassword',
-                'setupToken' => $token,
-            ];
-        }
-
-        if (!$user->hasVerifiedEmail()) {
-            $token = $user->createToken('setup-token')->plainTextToken;
-
-            return [
-                'status' => 'emailNotVerified',
-                'setupToken' => $token,
-            ];
-        }
-
-        $token = $user->createToken('api-token')->plainTextToken;
-
+    if (!$user || !Hash::check($data['password'], $user->password)) {
         return [
-            'status' => 'ok',
-            'token' => $token,
-            'userId' => $user->id,
+            'message' => 'Invalid credentials',
         ];
     }
 
-    public function changePassword(array $data): array
-    {
-        $user = auth()->user();
+    // يجب تغيير كلمة المرور
+    if ($user->must_change_password) {
+        $token = $user->createToken('setup-token')->plainTextToken;
 
-        $user->password = $data['newPassword'];
-        $user->must_change_password = false;
-        $user->save();
+        return [
+            'status' => 'mustChangePassword',
+            'setupToken' => $token,
+        ];
+    }
+
+    // لا يوجد إيميل
+    if (!$user->email) {
+        $token = $user->createToken('setup-token')->plainTextToken;
 
         return [
             'status' => 'mustAddEmail',
-            'message' => 'Password changed successfully',
+            'setupToken' => $token,
         ];
     }
+
+    // الإيميل غير مفعل
+    if (!$user->hasVerifiedEmail()) {
+        $token = $user->createToken('setup-token')->plainTextToken;
+
+        return [
+            'status' => 'emailNotVerified',
+            'setupToken' => $token,
+        ];
+    }
+
+    // دخول طبيعي
+    $token = $user->createToken('api-token')->plainTextToken;
+
+    return [
+        'status' => 'ok',
+        'token' => $token,
+        'user' => [
+            'id' => $user->id,
+            'universityId' => $user->university_id,
+            'email' => $user->email,
+        ],
+    ];
+}
+
+
+   public function changePassword(array $data): array
+{
+    $user = auth()->user();
+
+    $user->password = Hash::make($data['newPassword']);
+    $user->must_change_password = false;
+    $user->save();
+
+    return [
+        'status' => 'mustAddEmail',
+        'message' => 'Password changed successfully',
+    ];
+}
+
 
     public function addEmail(array $data): array
     {
@@ -137,33 +156,35 @@ class AuthService
         ];
     }
 
-    public function resetPassword(array $data): array
-    {
-        $status = Password::reset(
-            [
-                'email' => $data['email'],
-                'password' => $data['password'],
-                'password_confirmation' => $data['password_confirmation'],
-                'token' => $data['token'],
-            ],
-            function ($user, $password) {
-                $user->password = $password;
-                $user->must_change_password = false;
-                $user->save();
-            }
-        );
-
-        if ($status === Password::PASSWORD_RESET) {
-            return [
-                'status' => 'passwordReset',
-                'message' => 'Password has been reset successfully.',
-            ];
+  public function resetPassword(array $data): array
+{
+    $status = Password::reset(
+        [
+            'email' => $data['email'],
+            'password' => $data['password'],
+            'password_confirmation' => $data['password_confirmation'] ?? null,
+            'token' => $data['token'],
+        ],
+        function ($user, $password) {
+            $user->password = Hash::make($password);
+            $user->must_change_password = false;
+            $user->save();
         }
+    );
 
+    if ($status === Password::PASSWORD_RESET) {
         return [
-            'message' => 'Invalid or expired reset link.',
+            'status' => 'passwordReset',
+            'message' => 'Password has been reset successfully.',
         ];
     }
+
+    return [
+        'message' => 'Invalid or expired reset link.',
+    ];
+}
+
+
 
     public function logout(): array
     {

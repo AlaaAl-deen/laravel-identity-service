@@ -5,6 +5,8 @@ namespace App\Modules\Identity\Services;
 use App\Modules\Identity\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\DB;
+
 
 class AuthService
 {
@@ -17,7 +19,15 @@ class AuthService
             'message' => 'Invalid credentials',
         ];
     }
+    
+$roles = DB::table('user_roles')
+    ->join('roles', 'roles.id', '=', 'user_roles.role_id')
+    ->where('user_roles.user_id', $user->id)
+    ->pluck('roles.slug')
+    ->toArray();
 
+
+        
     // يجب تغيير كلمة المرور
     if ($user->must_change_password) {
         $token = $user->createToken('setup-token')->plainTextToken;

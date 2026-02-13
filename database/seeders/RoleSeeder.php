@@ -62,13 +62,6 @@ class RoleSeeder extends Seeder
         ]);
 
 
-        $userId = 2;
-
-        $role = DB::table('roles')->where('slug', 'student')->first();
-
-        DB::table('user_roles')->insert([
-            'user_id' => $userId,
-            'role_id' => $role->id,
-        ]);
+       
     }
 }

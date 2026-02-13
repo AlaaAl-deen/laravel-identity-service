@@ -10,19 +10,19 @@ class RoleSeeder extends Seeder
     {
         DB::table('roles')->insert([
             [
-                'slug' => 'Admin',
+                'slug' => 'admin',
                 'name' => 'مسئول',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
-                'slug' => 'Student',
+                'slug' => 'student',
                 'name' => 'طالب',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
-                'slug' => 'Supervisor',
+                'slug' => 'supervisor',
                 'name' => 'مشرف',
                 'created_at' => now(),
                 'updated_at' => now(),

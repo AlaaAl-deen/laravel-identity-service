@@ -30,6 +30,7 @@ return new class extends Migration
            $table->foreignId('study_level_id')
                  ->constrained('study_levels')
                  ->cascadeOnDelete();
+           $table->string('photo')->nullable(); 
 
           $table->timestamps();
         });

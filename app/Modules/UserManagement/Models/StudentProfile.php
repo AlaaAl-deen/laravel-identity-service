@@ -17,6 +17,7 @@ class StudentProfile extends Model
     'college_id',
     'department_id',
     'study_level_id',
+    'photo',
 ];
  
 public function studyLevel()

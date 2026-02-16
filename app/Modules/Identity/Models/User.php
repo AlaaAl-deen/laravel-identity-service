@@ -17,9 +17,11 @@ class User extends Authenticatable implements MustVerifyEmail
     use HasFactory;
     protected $fillable = [
         'university_id',
+        'type',
         'email',
         'password',
         'must_change_password',
+        'is_active',
     ];
 
     protected static function newFactory()
@@ -38,6 +40,7 @@ class User extends Authenticatable implements MustVerifyEmail
         return [
             'email_verified_at' => 'datetime',
             'must_change_password' => 'boolean',
+            'is_active' => 'boolean',
             'password' => 'hashed',
         ];
     }

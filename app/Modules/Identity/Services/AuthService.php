@@ -19,12 +19,13 @@ class AuthService
             'message' => 'Invalid credentials',
         ];
     }
-    
+ /*   
 $roles = DB::table('user_roles')
     ->join('roles', 'roles.id', '=', 'user_roles.role_id')
     ->where('user_roles.user_id', $user->id)
     ->pluck('roles.slug')
     ->toArray();
+    */
 
 
         

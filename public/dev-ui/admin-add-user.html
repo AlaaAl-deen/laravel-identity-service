@@ -1,78 +1,187 @@
 <!DOCTYPE html>
-<html>
+<html lang="ar">
 <head>
-    <title>Add Student</title>
-    <link rel="stylesheet" href="css/style.css">
+    <meta charset="UTF-8">
+    <title>إضافة مستخدم</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            direction: rtl;
+            background: #f4f6f8;
+            padding: 40px;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 500px;
+            margin: auto;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        h2 { margin-bottom: 20px; }
+        label { display: block; margin-top: 10px; }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+        }
+        button {
+            margin-top: 20px;
+            padding: 10px;
+            width: 100%;
+            background: #2b6cb0;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 6px;
+        }
+        .success { background: #c6f6d5; }
+        .error { background: #fed7d7; }
+    </style>
 </head>
 <body>
+
 <div class="card">
-    <h2>Add New Student</h2>
-    <p>Enter university ID and temporary password.</p>
+    <h2>إضافة مستخدم جديد</h2>
 
-    <input id="universityId" placeholder="University ID">
-    <input id="password" type="password" placeholder="Temporary Password">
+    <label>الرقم الجامعي</label>
+    <input type="text" id="university_id">
 
-    <button onclick="addUser()">Create User</button>
+    <label>الاسم</label>
+    <input type="text" id="name">
 
-    <div id="msg"></div>
+    <label>كلمة المرور</label>
+    <input type="text" id="password" value="123456">
+
+    <label>نوع المستخدم</label>
+    <select id="type" onchange="toggleFields()">
+        <option value="student">طالب</option>
+        <option value="staff">موظف</option>
+    </select>
+
+    <!-- حقول الطالب -->
+    <div id="studentFields">
+        <label>الكلية</label>
+        <select id="college_id"></select>
+
+        <label>القسم</label>
+        <select id="department_id"></select>
+
+        <label>المرحلة الدراسية</label>
+        <select id="study_level_id"></select>
+    </div>
+
+    <!-- حقول الموظف -->
+    <div id="staffFields" style="display:none;">
+        <label>الدرجة العلمية (اختياري)</label>
+        <select id="academic_rank_id"></select>
+
+        <label>التخصص (اختياري)</label>
+        <input type="text" id="specialization">
+    </div>
+
+    <button onclick="createUser()">إضافة المستخدم</button>
+
+    <div id="result"></div>
 </div>
 
-<script src="js/app.js"></script>
 <script>
-function showMessage(type, text) {
-    const msg = document.getElementById("msg");
-    msg.innerHTML = `<div class="alert alert-${type}">${text}</div>`;
+function toggleFields() {
+    const type = document.getElementById('type').value;
+    document.getElementById('studentFields').style.display =
+        type === 'student' ? 'block' : 'none';
+    document.getElementById('staffFields').style.display =
+        type === 'staff' ? 'block' : 'none';
 }
 
-function addUser() {
-    const universityIdField = document.getElementById("universityId");
-    const passwordField = document.getElementById("password");
+// تحميل بيانات القوائم
+async function loadMeta() {
+    await loadSelect('/api/v1/meta/colleges', 'college_id');
+    await loadSelect('/api/v1/meta/departments', 'department_id');
+    await loadSelect('/api/v1/meta/study-levels', 'study_level_id');
+    await loadSelect('/api/v1/meta/academic-ranks', 'academic_rank_id', true);
+}
 
-    document.getElementById("msg").innerHTML = "";
+async function loadSelect(url, elementId, allowEmpty = false) {
+    const res = await fetch(url);
+    const data = await res.json();
 
-    if (!universityIdField.value) {
-        showMessage("error", "University ID is required.");
-        return;
+    const select = document.getElementById(elementId);
+    select.innerHTML = '';
+
+    if (allowEmpty) {
+        const empty = document.createElement('option');
+        empty.value = '';
+        empty.textContent = 'بدون';
+        select.appendChild(empty);
     }
 
-    if (passwordField.value.length < 8) {
-        showMessage("error", "Password must be at least 8 characters.");
-        return;
-    }
-
-    fetch(API + "/users", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            universityId: universityIdField.value,
-            password: passwordField.value
-        })
-    })
-    .then(async (response) => {
-        const data = await response.json();
-
-        if (!response.ok) {
-            if (data.errors) {
-                const firstError = Object.values(data.errors)[0][0];
-                showMessage("error", firstError);
-            } else {
-                showMessage("error", data.message || "Error occurred");
-            }
-            return;
-        }
-
-        showMessage("success", data.message);
-
-        // تفريغ الحقول بعد النجاح
-        universityIdField.value = "";
-        passwordField.value = "";
-    })
-    .catch(() => {
-        showMessage("error", "Cannot connect to server");
+    data.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item.id;
+        option.textContent = item.name;
+        select.appendChild(option);
     });
 }
+
+async function createUser() {
+    const type = document.getElementById('type').value;
+
+    let data = {
+        university_id: document.getElementById('university_id').value,
+        name: document.getElementById('name').value,
+        password: document.getElementById('password').value,
+        type: type
+    };
+
+    if (type === 'student') {
+        data.college_id = document.getElementById('college_id').value;
+        data.department_id = document.getElementById('department_id').value;
+        data.study_level_id = document.getElementById('study_level_id').value;
+    }
+
+    if (type === 'staff') {
+        const rank = document.getElementById('academic_rank_id').value;
+        const spec = document.getElementById('specialization').value;
+
+        if (rank) data.academic_rank_id = rank;
+        if (spec) data.specialization = spec;
+    }
+
+    const resultBox = document.getElementById('result');
+    resultBox.innerHTML = '';
+
+    try {
+        const response = await fetch('/api/v1/users', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            resultBox.innerHTML =
+                `<div class="result success">تم إنشاء المستخدم بنجاح. ID: ${result.user_id}</div>`;
+        } else {
+            resultBox.innerHTML =
+                `<div class="result error">${JSON.stringify(result)}</div>`;
+        }
+    } catch (error) {
+        resultBox.innerHTML =
+            `<div class="result error">خطأ في الاتصال بالخادم</div>`;
+    }
+}
+
+loadMeta();
 </script>
+
 </body>
 </html>

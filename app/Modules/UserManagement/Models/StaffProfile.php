@@ -16,6 +16,7 @@ class StaffProfile extends Model
         'name',
         'academic_rank_id',
         'specialization',
+        'photo',
     ];
 
     public function departments()

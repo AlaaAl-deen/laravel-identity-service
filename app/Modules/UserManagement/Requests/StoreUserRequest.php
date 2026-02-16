@@ -22,10 +22,33 @@ class StoreUserRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            'universityId' => ['required', 'string', 'unique:users,university_id'],
-        'password' => ['required', 'string', 'min:6'],
-        
+         $rules = [
+            'university_id' => ['required', 'string', 'max:50', 'unique:users,university_id'],
+            'type' => ['required', 'in:student,staff'],
+            'password' => ['required', 'string', 'min:6'],
+            'name' => ['required', 'string', 'max:255'],
         ];
+
+        // قواعد الطالب
+        if ($this->input('type') === 'student') {
+            $rules = array_merge($rules, [
+                'college_id' => ['required', 'exists:colleges,id'],
+                'department_id' => ['required', 'exists:departments,id'],
+                'study_level_id' => ['required', 'exists:study_levels,id'],
+            ]);
+        }
+
+        // قواعد الموظف
+        if ($this->input('type') === 'staff') {
+            $rules = array_merge($rules, [
+                'academic_rank_id' => ['nullable', 'exists:academic_ranks,id'],
+                'specialization' => ['nullable', 'string', 'max:255'],
+                'department_ids' => ['nullable', 'array'],
+                'department_ids.*' => ['exists:departments,id'],
+            ]);
+        }
+
+        return $rules;
+    
     }
 }

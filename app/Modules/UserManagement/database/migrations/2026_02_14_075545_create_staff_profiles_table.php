@@ -20,10 +20,12 @@ return new class extends Migration
             $table->string('name');
 
             $table->foreignId('academic_rank_id')
+                  ->nullable()
                   ->constrained()
                   ->cascadeOnDelete();
 
             $table->string('specialization')->nullable();
+            $table->string('photo')->nullable(); 
             $table->timestamps();
         });
     }

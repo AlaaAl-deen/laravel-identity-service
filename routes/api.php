@@ -14,5 +14,3 @@ require app_path('Modules/Identity/Routes/api.php');
 
 require base_path('app/Modules/UserManagement/routes/api.php');
 
-// For aboody
-require base_path('app/Modules/AccessControl/routes/api.php');

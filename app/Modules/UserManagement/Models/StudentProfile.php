@@ -20,15 +20,24 @@ class StudentProfile extends Model
     'photo',
 ];
  
-public function studyLevel()
-{
-    return $this->belongsTo(StudyLevel::class);
-}
+  public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
-public function user()
-{
-    return $this->belongsTo(User::class);
-}
+    public function college()
+    {
+        return $this->belongsTo(College::class);
+    }
 
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
+    }
+
+    public function studyLevel()
+    {
+        return $this->belongsTo(StudyLevel::class);
+    }
 
 }

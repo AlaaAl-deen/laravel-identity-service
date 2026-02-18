@@ -19,6 +19,16 @@ class StaffProfile extends Model
         'photo',
     ];
 
+     public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function academicRank()
+    {
+        return $this->belongsTo(AcademicRank::class);
+    }
+
     public function departments()
     {
         return $this->belongsToMany(
@@ -28,9 +38,4 @@ class StaffProfile extends Model
             'department_id'
         );
     }
-
-    public function user()
-{
-    return $this->belongsTo(User::class);
-}
 }

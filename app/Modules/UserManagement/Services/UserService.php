@@ -61,4 +61,176 @@ class UserService
             $staff->departments()->sync($data['department_ids']);
         }
     }
+
+    // =============================
+    // show all users
+    // =============================
+
+    public function getAllUsers()
+{
+    return User::with(['studentProfile', 'staffProfile'])
+        ->select('id', 'university_id', 'type', 'email', 'is_active')
+        ->get()
+        ->map(function ($user) {
+            $name = null;
+
+            if ($user->type === 'student' && $user->studentProfile) {
+                $name = $user->studentProfile->name;
+            }
+
+            if ($user->type === 'staff' && $user->staffProfile) {
+                $name = $user->staffProfile->name;
+            }
+
+            return [
+                'id' => $user->id,
+                'university_id' => $user->university_id,
+                'type' => $user->type,
+                'email' => $user->email,
+                'is_active' => $user->is_active,
+                'name' => $name,
+            ];
+        });
+}
+
+// =============================
+    // show one user
+    // =============================
+
+public function getUserById(int $id): array
+{
+    $user = User::with([
+        'studentProfile.college',
+        'studentProfile.department',
+        'studentProfile.studyLevel',
+        'staffProfile.academicRank',
+    ])->findOrFail($id);
+
+    if ($user->type === 'student' && $user->studentProfile) {
+        $profile = $user->studentProfile;
+
+        return [
+            'id' => $user->id,
+            'university_id' => $user->university_id,
+            'type' => $user->type,
+            'email' => $user->email,
+            'is_active' => $user->is_active,
+            'profile' => [
+                'name' => $profile->name,
+                'college' => optional($profile->college)->name,
+                'department' => optional($profile->department)->name,
+                'study_level' => optional($profile->studyLevel)->name,
+                'photo' => $profile->photo,
+            ],
+        ];
+    }
+
+    if ($user->type === 'staff' && $user->staffProfile) {
+        $profile = $user->staffProfile;
+
+        return [
+            'id' => $user->id,
+            'university_id' => $user->university_id,
+            'type' => $user->type,
+            'email' => $user->email,
+            'is_active' => $user->is_active,
+            'profile' => [
+                'name' => $profile->name,
+                'academic_rank' => optional($profile->academicRank)->name,
+                'specialization' => $profile->specialization,
+                'photo' => $profile->photo,
+            ],
+        ];
+    }
+
+    return [
+        'id' => $user->id,
+        'university_id' => $user->university_id,
+        'type' => $user->type,
+        'email' => $user->email,
+        'is_active' => $user->is_active,
+        'profile' => null,
+    ];
+}
+
+// =============================
+    // Update user
+    // =============================
+public function updateUser(int $id, array $data): void
+{
+    DB::transaction(function () use ($id, $data) {
+
+        $user = User::with(['studentProfile', 'staffProfile'])->findOrFail($id);
+
+        // update state of count
+        if (isset($data['is_active'])) {
+            $user->is_active = $data['is_active'];
+            $user->save();
+        }
+
+        // =============================
+        // srtudent
+        // =============================
+        if ($user->type === 'student' && $user->studentProfile) {
+            $profile = $user->studentProfile;
+
+            if (isset($data['name'])) {
+                $profile->name = $data['name'];
+            }
+
+            if (isset($data['college_id'])) {
+                $profile->college_id = $data['college_id'];
+            }
+
+            if (isset($data['department_id'])) {
+                $profile->department_id = $data['department_id'];
+            }
+
+            if (isset($data['study_level_id'])) {
+                $profile->study_level_id = $data['study_level_id'];
+            }
+
+            $profile->save();
+        }
+
+        // =============================
+        // Empoly
+        // =============================
+        if ($user->type === 'staff' && $user->staffProfile) {
+            $profile = $user->staffProfile;
+
+            if (isset($data['name'])) {
+                $profile->name = $data['name'];
+            }
+
+            if (array_key_exists('academic_rank_id', $data)) {
+                $profile->academic_rank_id = $data['academic_rank_id'];
+            }
+
+            if (isset($data['specialization'])) {
+                $profile->specialization = $data['specialization'];
+            }
+
+            $profile->save();
+
+            // update department
+            if (isset($data['department_ids'])) {
+                $profile->departments()->sync($data['department_ids']);
+            }
+        }
+    });
+}
+
+// =============================
+    // Update user state
+    // =============================
+public function updateUserStatus(int $id, bool $isActive): void
+{
+    $user = User::findOrFail($id);
+
+    $user->is_active = $isActive;
+    $user->save();
+}
+
+
 }
